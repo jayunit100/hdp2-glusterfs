@@ -32,6 +32,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Shell;
 import org.apache.hadoop.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /*
  * Copied from org.apache.fs.RawLocalFileSystem.RawFileStatus
  */
@@ -47,13 +49,15 @@ public class GlusterFileStatus extends FileStatus{
         return !super.getOwner().equals("");
     }
 
-    
+    static Logger log = LoggerFactory.getLogger(GlusterFileStatus.class);
     /*
-     * This constructor is the only difference than the RawLocalFileStatus impl. RawLocalFileSystem converts a raw file path to path with the same prefix. ends up with a double /mnt/glusterfs.
+     * This constructor is the only difference than the RawLocalFileStatus impl. 
+     * RawLocalFileSystem converts a raw file path to path with the same prefix. ends up with a double /mnt/glusterfs.
      */
     GlusterFileStatus(File f, long defaultBlockSize, GlusterVolume fs){
         super(f.length(), f.isDirectory(), 1, defaultBlockSize, f.lastModified(), fs.fileToPath(f));
         this.fs=fs;
+        log.info("gluster file status : f=" + f + " f2path=" + fs.fileToPath(f) );
     }
 
     @Override

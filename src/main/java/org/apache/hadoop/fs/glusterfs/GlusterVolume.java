@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class GlusterVolume extends RawLocalFileSystem{
 
-    static final Logger log = LoggerFactory.getLogger(GlusterFileSystem.class);
+    static final Logger log = LoggerFactory.getLogger(GlusterVolume.class);
     public static final URI NAME = URI.create("glusterfs:///");
     
     protected String root=null;
@@ -47,13 +47,13 @@ public class GlusterVolume extends RawLocalFileSystem{
     public GlusterVolume(){}
     
     public GlusterVolume(Configuration conf){
-        this();
+        super();
         this.setConf(conf);
     }
     public URI getUri() { return NAME; }
     
     public void setConf(Configuration conf){
-        log.info("initializing gluster volume..");
+        log.info("initializing gluster volume......  ....");
         super.setConf(conf);
         if(conf!=null){
          
@@ -70,33 +70,40 @@ public class GlusterVolume extends RawLocalFileSystem{
     }
     
     public Path getWorkingDirectory() {
+        log.info("getWorkingDir = path : " + NAME.toString() );
         return new Path(NAME.toString() );
     }
     
     public File pathToFile(Path path) {
+        log.info("pathToFile = path : " + path.toUri().getRawPath() );
+
         String pathString = path.toUri().getRawPath();
      
-        if(pathString.startsWith(Path.SEPARATOR)){
-            pathString = pathString.substring(1);
-        }
+       // if(pathString.startsWith(Path.SEPARATOR)){
+       //     pathString = pathString.substring(1);
+       // }
         
-        return new File(root + Path.SEPARATOR + pathString);
+        return new File(pathString);
     }
     
     public Path fileToPath(File path) {
+        log.info("fileToPath " + path.toURI().getRawPath());
         /* remove the /mnt/glustersfs part of the file path */
-        String pathString = path.toURI().getRawPath().substring(root.length());
-        return new Path(NAME.toString() + pathString);
+        //String pathString = path.toURI().getRawPath().substring(root.length());
+        //return new Path(path.toURI().getRawPath());
+        return new Path(path.toURI().getRawPath());
     }
     
     public FileStatus[] listStatus(Path f) throws IOException {
+        log.info("liststatus of " + f);
+
         File localf = pathToFile(f);
         FileStatus[] results;
 
         if (!localf.exists()) {
           throw new FileNotFoundException("File " + f + " does not exist");
         }
-        if (localf.isFile()) {
+        if (localf.isFile() && !localf.isDirectory()) {
           return new FileStatus[] {
             new GlusterFileStatus(localf, getDefaultBlockSize(), this) };
         }
@@ -108,22 +115,28 @@ public class GlusterVolume extends RawLocalFileSystem{
         results = new FileStatus[names.length];
         int j = 0;
         for (int i = 0; i < names.length; i++) {
-          try {
-            results[j] = getFileStatus(new Path(names[i].getAbsolutePath()));
-            j++;
+            log.info(i+" loop");
+            try {
+            results[j++] = getFileStatus(new Path(names[i].getAbsolutePath()));
           } catch (FileNotFoundException e) {
-            // ignore the files not found since the dir list may have have changed
+              log.error("FNF EXception!!!" +names[i] + e.getMessage());
+              // ignore the files not found since the dir list may have have changed
             // since the names[] list was generated.
           }
         }
+        return results;
+        /**
         if (j == names.length) {
           return results;
         }
         return Arrays.copyOf(results, j);
+          **/
       }
     
     
     public FileStatus getFileStatus(Path f) throws IOException {
+        log.info("getFileStatus " + f);
+
         File path = pathToFile(f);
         if (path.exists()) {
           return new GlusterFileStatus(pathToFile(f), getDefaultBlockSize(), this);
@@ -134,6 +147,8 @@ public class GlusterVolume extends RawLocalFileSystem{
 
     
     public long getBlockSize(Path path) throws IOException{
+        log.info("getFileStatus " + path);
+
         long blkSz;
         File f=pathToFile(path);
 
@@ -145,6 +160,8 @@ public class GlusterVolume extends RawLocalFileSystem{
     }
    
     public BlockLocation[] getFileBlockLocations(FileStatus file,long start,long len) throws IOException{
+        log.info("getFileStatus " + file + " " +file.getPath());
+
         File f=pathToFile(file.getPath());
         BlockLocation[] result=null;
 
